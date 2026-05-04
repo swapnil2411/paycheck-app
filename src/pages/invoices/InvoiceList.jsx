@@ -237,7 +237,7 @@ const InvoiceList = () => {
               {invoices.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="no_record_found">
-                    No invoices found
+                    No data found
                   </td>
                 </tr>
               ) : (

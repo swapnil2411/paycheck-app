@@ -44,7 +44,7 @@ const ProjectList = ({ projects, onEdit, setIsModalOpen, onDelete, totalCount, l
                                 </tr>
                             ) : projects.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className='loading_cell'>No data found</td>
+                                    <td colSpan="7" className='no_record_found'>No data found</td>
                                 </tr>
                             ) : (
                                 projects.map((project, index) => (
