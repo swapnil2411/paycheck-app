@@ -2,7 +2,7 @@ import React from 'react';
 import Edit from '../../icons/Edit';
 import Delete from '../../icons/Delete';
 
-const ProjectList = ({ projects, onEdit, setIsModalOpen, totalCount, limit, page, setPage, loading }) => {
+const ProjectList = ({ projects, onEdit, setIsModalOpen, onDelete, totalCount, limit, page, setPage, loading }) => {
     const totalPages = Math.ceil(totalCount / limit);
     console.log("### totalCount, totalPages", totalCount, totalPages);
 
@@ -59,7 +59,7 @@ const ProjectList = ({ projects, onEdit, setIsModalOpen, totalCount, limit, page
                                         <button className='action_btn edit_btn' onClick={() => handleEdit(project)}>
                                             <Edit/>
                                         </button>
-                                        <button className='action_btn delete_btn'>
+                                        <button className='action_btn delete_btn' onClick={() => onDelete(project)}>
                                             <Delete />
                                         </button>
                                     </div>

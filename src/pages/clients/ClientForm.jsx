@@ -6,12 +6,13 @@ import Close from '../../icons/Close'
 import Save from '../../icons/Save'
 import { fetchPincodeDetails } from '../../services/useService'
 import { useLoader } from '../../context/loaderContext/LoaderContext'
-import { ValidateEmail, ValidatePan, ValidateMobileNumber, ValidateName, ValidateCompanyName  } from '../../validations/Validations'
+import { useToast } from '../../context/toastContext/ToastContext' // ✅
+import { ValidateEmail, ValidatePan, ValidateMobileNumber, ValidateName, ValidateCompanyName } from '../../validations/Validations'
 
 const ClientForm = ({ fetchClients, onSuccess, selectedClient }) => {
 
     const isEdit = Boolean(selectedClient);
-
+    const { showToast } = useToast();
     const { startLoader, stopLoader } = useLoader();
 
     const [clientData, setClientData] = useState({
@@ -103,6 +104,49 @@ const ClientForm = ({ fetchClients, onSuccess, selectedClient }) => {
         }
     };
 
+    // const lookupPincode = async (pincode, country) => {
+    //     if (!pincode || !country || pincode.length < 3) return;
+    //     if (isUserChangingCountry.current) return;
+    //     startLoader();
+
+
+    //     try {
+    //         const data = await fetchPincodeDetails(pincode, country);
+    //         const locations = data?.results?.[pincode] || [];
+
+
+
+    //         const matched = locations.find(
+    //             loc => loc.country_code === country
+    //         );
+
+    //         const location = matched || locations[0];
+    //         stopLoader();
+    //         if (location === undefined) {
+    //             console.warn('No location found for this pincode and country:', country);
+    //             return;
+    //         }
+    //         if (!location) return;
+
+
+
+    //         setClientData(prev => ({
+    //             ...prev,
+    //             city: location.province || '',
+    //             state: location.state || ''
+    //         }));
+
+    //         setClientError(prev => ({
+    //             ...prev,
+    //             city: '',
+    //             state: ''
+    //         }));
+    //     } catch (err) {
+    //         console.error(err);
+    //         stopLoader();
+    //     }
+    // };
+
     const validateClientData = () => {
         const errors = {};
         if (!clientData.first_name.trim()) {
@@ -125,11 +169,11 @@ const ClientForm = ({ fetchClients, onSuccess, selectedClient }) => {
         } else if (!ValidateCompanyName(clientData.company_name)) {
             errors.company_name = 'Invalid Company Name';
         }
-       if (!String(clientData.phone || '').trim()) {
-  errors.phone = 'Phone is required';
-} else if (!ValidateMobileNumber(String(clientData.phone))) {
-  errors.phone = 'Invalid Mobile Number';
-}
+        if (!String(clientData.phone || '').trim()) {
+            errors.phone = 'Phone is required';
+        } else if (!ValidateMobileNumber(String(clientData.phone))) {
+            errors.phone = 'Invalid Mobile Number';
+        }
         if (!clientData.customer_type) {
             errors.customer_type = 'Customer type is required';
         }
@@ -155,21 +199,21 @@ const ClientForm = ({ fetchClients, onSuccess, selectedClient }) => {
         //} 
         if (!clientData.pan.trim()) {
             errors.pan = 'PAN is required';
-        }else if (!ValidatePan(clientData.pan)) {
+        } else if (!ValidatePan(clientData.pan)) {
             errors.pan = 'Invalid PAN';
         }
         setClientError(errors);
 
         // 🔥 RETURN TRUE IF THERE ARE ERRORS
-    return Object.keys(errors).length > 0;
+        return Object.keys(errors).length > 0;
     }
 
     const handleClientInputChange = (e) => {
         const { name, value } = e.target
         setClientData(prev => ({
-    ...prev,
-    [name]: name === 'phone' ? String(value) : value
-  }));
+            ...prev,
+            [name]: name === 'phone' ? String(value) : value
+        }));
 
         setClientError(prevError => ({
             ...prevError,
@@ -180,7 +224,7 @@ const ClientForm = ({ fetchClients, onSuccess, selectedClient }) => {
             if (pincodeTimer) clearTimeout(pincodeTimer);
 
             const timer = setTimeout(() => {
-                lookupPincode(value, clientData.country);
+                lookupPincode(value, clientData.country?.value);
             }, 700);
 
             setPincodeTimer(timer);
@@ -209,40 +253,43 @@ const ClientForm = ({ fetchClients, onSuccess, selectedClient }) => {
 
 
     const handleSubmit = async () => {
-    if (validateClientData()) return;
-    startLoader();
-    try {
-        const storeClientData = {
-            ...clientData,
-            customer_type: clientData.customer_type?.value || null,
-            country: clientData.country?.label || null
-        };
+        if (validateClientData()) return;
+        startLoader();
+        try {
+            const storeClientData = {
+                ...clientData,
+                customer_type: clientData.customer_type?.value || null,
+                country: clientData.country?.label || null
+            };
 
-        if (isEdit) {
-            const { error } = await supabaseClient
-                .from('clients')
-                .update(storeClientData)
-                .eq('id', selectedClient.id);
+            if (isEdit) {
+                const { error } = await supabaseClient
+                    .from('clients')
+                    .update(storeClientData)
+                    .eq('id', selectedClient.id);
 
-            if (error) throw error;
-        } else {
-            const { error } = await supabaseClient
-                .from('clients')
-                .insert([storeClientData]);
+                if (error) throw error;
+                showToast("Client updated successfully ✅");
+            } else {
+                const { error } = await supabaseClient
+                    .from('clients')
+                    .insert([storeClientData]);
 
-            if (error) throw error;
+                if (error) throw error;
+                showToast("Client added successfully ✅"); // ✅
+            }
+
+            // resetForm();
+            fetchClients();
+            onSuccess();
+
+        } catch (error) {
+            console.error("Error submitting client data:", error);
+            showToast(error.code == "23505" ? "Client email already exists" : "Failed to save client", "error"); 
+        }finally {
+            stopLoader(); 
         }
-
-        // resetForm();
-        fetchClients();
-        onSuccess();
-        stopLoader();
-
-    } catch (error) {
-        console.error("Error submitting client data:", error);
-        stopLoader();
-    }
-};
+    };
 
 
     const handleCancel = () => {
@@ -267,34 +314,34 @@ const ClientForm = ({ fetchClients, onSuccess, selectedClient }) => {
     }
 
     useEffect(() => {
-  if (!selectedClient) return;
+        if (!selectedClient) return;
 
-  setClientData({
-    first_name: selectedClient.first_name || '',
-    last_name: selectedClient.last_name || '',
-    company_name: selectedClient.company_name || '',
-    email: selectedClient.email || '',
-    phone: selectedClient.phone || '',
-    customer_type: customerType.find(
-      t => t.value === selectedClient.customer_type
-    ) || null,
-    address_line_1: selectedClient.address_line_1 || '',
-    address_line_2: selectedClient.address_line_2 || '',
-    city: selectedClient.city || '',
-    state: selectedClient.state || '',
-    pincode: selectedClient.pincode || '',
-    country: countries.find(
-      c => c.label === selectedClient.country
-    ) || null,
-    pan: selectedClient.pan || ''
-  });
+        setClientData({
+            first_name: selectedClient.first_name || '',
+            last_name: selectedClient.last_name || '',
+            company_name: selectedClient.company_name || '',
+            email: selectedClient.email || '',
+            phone: selectedClient.phone || '',
+            customer_type: customerType.find(
+                t => t.value === selectedClient.customer_type
+            ) || null,
+            address_line_1: selectedClient.address_line_1 || '',
+            address_line_2: selectedClient.address_line_2 || '',
+            city: selectedClient.city || '',
+            state: selectedClient.state || '',
+            pincode: selectedClient.pincode || '',
+            country: countries.find(
+                c => c.label === selectedClient.country
+            ) || null,
+            pan: selectedClient.pan || ''
+        });
 
-  setClientError({});
-}, [selectedClient, countries]);
+        setClientError({});
+    }, [selectedClient, countries]);
 
 
-useEffect(() => {
-      console.log("### Selected Client in parent", selectedClient);
+    useEffect(() => {
+        console.log("### Selected Client in parent", selectedClient);
     }, [selectedClient])
 
     // useEffect(() => {

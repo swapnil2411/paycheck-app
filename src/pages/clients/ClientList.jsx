@@ -4,7 +4,7 @@ import Plus from '../../icons/Plus';
 import Edit from '../../icons/Edit';
 import Delete from '../../icons/Delete';
 
-const ClientList = ({clients, onEdit, setIsModalOpen, totalCount, limit, page, setPage, loading}) => {
+const ClientList = ({clients, onEdit, setIsModalOpen, totalCount, onDelete, limit, page, setPage, loading}) => {
    const totalPages = Math.ceil(totalCount / limit); 
     console.log("### ClientList from parent", clients);
     const [expandedRow, setExpandedRow] = useState(null);
@@ -77,7 +77,7 @@ const ClientList = ({clients, onEdit, setIsModalOpen, totalCount, limit, page, s
                                 <button className='action_btn edit_btn' onClick={() => handleEdit(client)}>
                                 <Edit/>
                             </button>
-                            <button className='action_btn delete_btn'>
+                            <button className='action_btn delete_btn' onClick={() => onDelete(client)}>
                                 <Delete />
                             </button>
                             </div>

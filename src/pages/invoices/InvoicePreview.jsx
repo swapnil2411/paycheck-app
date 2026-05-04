@@ -93,7 +93,7 @@ setTaxOption,
 
             <p><strong>IFSC Code: </strong><span>HDFC0008177</span></p>
 
-            <p><strong>Branch Address: </strong><span>HDFC bank, Unit no. 5, ATL coroprate park <br /> Saki Vihar Road, Powai, Mumbai-400072</span></p>
+            <p><strong>Branch Address: </strong><span>HDFC bank, Unit no. 5, ATL coroprate park Saki Vihar Road, Powai, Mumbai-400072</span></p>
 
             <p><strong>UPI ID: </strong><span>swapnildarge65-1@okhdfcbank</span></p>
           </div>

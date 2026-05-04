@@ -117,6 +117,17 @@ const InvoiceForm = ({
     updated[index][field] =
       field === "description" ? value : value === "" ? "" : Number(value);
     setItems(updated);
+
+     // ✅ REMOVE ERROR FOR THIS FIELD
+  setErrors((prev) => {
+    const newErrors = { ...prev };
+
+    if (field === "description") delete newErrors[`desc_${index}`];
+    if (field === "quantity") delete newErrors[`qty_${index}`];
+    if (field === "price") delete newErrors[`price_${index}`];
+
+    return newErrors;
+  });
   };
 
   const addRow = () => {
@@ -147,14 +158,30 @@ const InvoiceForm = ({
           <SelectDropdown
             options={clientOptions}
             value={client}
-            onChange={setClient}
+            onChange={(value) => {
+    setClient(value);
+
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.client;
+      return newErrors;
+    });
+  }}
           />
           {errors.client && <p className="error_message">{errors.client}</p>}
         </div>
 
         <div className="form_element">
           <label>Subject *</label>
-          <input value={subject} onChange={(e) => setSubject(e.target.value)} />
+          <input value={subject} onChange={(e) => {
+    setSubject(e.target.value);
+
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.subject;
+      return newErrors;
+    });
+  }} />
           {errors.subject && <p className="error_message">{errors.subject}</p>}
         </div>
 
@@ -165,7 +192,15 @@ const InvoiceForm = ({
             </label>{" "}
             <DatePicker
               selected={invoiceDate}
-              onChange={setInvoiceDate}
+              onChange={(date) => {
+    setInvoiceDate(date);
+
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.invoiceDate;
+      return newErrors;
+    });
+  }}
               showIcon
             />
             {errors.invoiceDate && (
@@ -176,7 +211,15 @@ const InvoiceForm = ({
             <label>
               Due Date <span className="asterick">*</span>
             </label>
-            <DatePicker selected={dueDate} onChange={setDueDate} showIcon />
+            <DatePicker selected={dueDate} onChange={(date) => {
+    setDueDate(date);
+
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors.dueDate;
+      return newErrors;
+    });
+  }} showIcon />
             {errors.dueDate && (
               <p className="error_message">{errors.dueDate}</p>
             )}
@@ -198,7 +241,7 @@ const InvoiceForm = ({
 
       {/* ================= Items ================= */}
       <div className="items_list">
-        <h3>Products</h3>
+        <h3 className="products_heading">Products</h3>
 
         {items.map((item, index) => (
           <div key={index} className={`item-row ${items.length > 1 ? 'with_remove_btn' : ''}`}>

@@ -5,10 +5,12 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Close from '../../icons/Close';
 import Save from '../../icons/Save';
+import { useToast } from '../../context/toastContext/ToastContext';  // 👈 new
 
 const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
 
   const isEdit = Boolean(selectedProject);
+  const { showToast } = useToast();  // 👈 new
 
   const [clients, setClients] = useState([]);
   const [errors, setErrors] = useState({});
@@ -140,12 +142,15 @@ const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
           .eq('id', selectedProject.id);
 
         if (error) throw error;
+        showToast('Project updated successfully ✅');  // 👈 new
+
       } else {
         const { error } = await supabaseClient
           .from('projects')
           .insert([payload]).select();
 
         if (error) throw error;
+        showToast('Project added successfully ✅');  // 👈 new
       }
 
       handleCancel();
@@ -154,6 +159,7 @@ const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
 
     } catch (err) {
       console.error(err);
+      showToast(isEdit ? 'Error updating project' : 'Error adding project', 'error');  // 👈 new
     }
   };
 
@@ -171,123 +177,118 @@ const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
 
   return (
     <div className="form_wrapper">
-        <div className='form_element_container'>
-            <div className="form_element">
-        <label>Project Name *</label>
-        <input
-          type="text"
-          value={projectData.project_name}
-          onChange={(e) =>
-            setProjectData(prev => ({
-              ...prev,
-              project_name: e.target.value
-            }))
-          }
-        />
-        {errors.project_name && (
-          <span className="error_message">{errors.project_name}</span>
-        )}
-      </div>
-
-      <div className="form_element">
-        <label>Client *</label>
-        <SelectDropdown
-          options={clients}
-          value={projectData.client_id}
-          onChange={(selected) =>
-            setProjectData(prev => ({
-              ...prev,
-              client_id: selected
-            }))
-          }
-        />
-        {errors.client_id && (
-          <span className="error_message">{errors.client_id}</span>
-        )}
-      </div>
-
-      <div className="form_element">
-        <label>Project Type *</label>
-        <SelectDropdown
-          options={projectTypeOptions}
-          value={projectData.project_type}
-          onChange={(selected) =>
-            setProjectData(prev => ({
-              ...prev,
-              project_type: selected
-            }))
-          }
-        />
-        {errors.project_type && (
-          <span className="error_message">{errors.project_type}</span>
-        )}
-      </div>
-
-      <div className="form_element">
-        <label>Description</label>
-        <textarea
-          value={projectData.description}
-          onChange={(e) =>
-            setProjectData(prev => ({
-              ...prev,
-              description: e.target.value
-            }))
-          }
-        />
-      </div>
-
-      <div className="form_element">
-        <label>Start Date *</label>
-        <DatePicker
-          selected={projectData.start_date}
-          onChange={(date) =>
-            setProjectData(prev => ({
-              ...prev,
-              start_date: date
-            }))
-          }
-          dateFormat="yyyy-MM-dd"
-          className="date_input"
-        />
-        {errors.start_date && (
-          <span className="error_message">{errors.start_date}</span>
-        )}
-      </div>
-
-      <div className="form_element">
-        <label>End Date</label>
-        <DatePicker
-          selected={projectData.end_date}
-          onChange={(date) =>
-            setProjectData(prev => ({
-              ...prev,
-              end_date: date
-            }))
-          }
-          dateFormat="yyyy-MM-dd"
-          className="date_input"
-        />
-        {errors.end_date && (
-          <span className="error_message">{errors.end_date}</span>
-        )}
-      </div>
+      <div className='form_element_container'>
+        <div className="form_element">
+          <label>Project Name *</label>
+          <input
+            type="text"
+            value={projectData.project_name}
+            onChange={(e) =>
+              setProjectData(prev => ({
+                ...prev,
+                project_name: e.target.value
+              }))
+            }
+          />
+          {errors.project_name && (
+            <span className="error_message">{errors.project_name}</span>
+          )}
         </div>
-      
-<div className='form_btn_grp'>
-    <div className='form_btn_grp'>
-                    <button className='btn outline_btn' onClick={handleCancel}>
-                        <Close />
-                        <span>Cancel</span>
-                    </button>
-                    <button className='btn filled_btn' onClick={handleSubmit}>
-                        <Save />
-                        <span>Save</span>
-                    </button>
-                </div>
-       
-</div>
-      
 
+        <div className="form_element">
+          <label>Client *</label>
+          <SelectDropdown
+            options={clients}
+            value={projectData.client_id}
+            onChange={(selected) =>
+              setProjectData(prev => ({
+                ...prev,
+                client_id: selected
+              }))
+            }
+          />
+          {errors.client_id && (
+            <span className="error_message">{errors.client_id}</span>
+          )}
+        </div>
+
+        <div className="form_element">
+          <label>Project Type *</label>
+          <SelectDropdown
+            options={projectTypeOptions}
+            value={projectData.project_type}
+            onChange={(selected) =>
+              setProjectData(prev => ({
+                ...prev,
+                project_type: selected
+              }))
+            }
+          />
+          {errors.project_type && (
+            <span className="error_message">{errors.project_type}</span>
+          )}
+        </div>
+
+        <div className="form_element">
+          <label>Description</label>
+          <textarea
+            value={projectData.description}
+            onChange={(e) =>
+              setProjectData(prev => ({
+                ...prev,
+                description: e.target.value
+              }))
+            }
+          />
+        </div>
+
+        <div className="form_element">
+          <label>Start Date *</label>
+          <DatePicker
+            selected={projectData.start_date}
+            onChange={(date) =>
+              setProjectData(prev => ({
+                ...prev,
+                start_date: date
+              }))
+            }
+            dateFormat="yyyy-MM-dd"
+            className="date_input"
+          />
+          {errors.start_date && (
+            <span className="error_message">{errors.start_date}</span>
+          )}
+        </div>
+
+        <div className="form_element">
+          <label>End Date</label>
+          <DatePicker
+            selected={projectData.end_date}
+            onChange={(date) =>
+              setProjectData(prev => ({
+                ...prev,
+                end_date: date
+              }))
+            }
+            dateFormat="yyyy-MM-dd"
+            className="date_input"
+          />
+          {errors.end_date && (
+            <span className="error_message">{errors.end_date}</span>
+          )}
+        </div>
+      </div>
+
+      <div className='form_btn_grp'>
+        <button className='btn outline_btn' onClick={handleCancel}>
+          <Close />
+          <span>Cancel</span>
+        </button>
+        <button className='btn filled_btn' onClick={handleSubmit}>
+          <Save />
+          <span>Save</span>
+        </button>
+      </div>
     </div>
   );
 };
