@@ -320,11 +320,17 @@ input:focus {
   border-color: #4449F2;
 }
 
+input:disabled,
+textarea:disabled {
+  background-color: #e6e6e6;
+  border-color: #e6e6e6;
+}
+
 /* SECTION HEADING CSS */
 .section_title {
   font-size: 1.2vw;
   padding: 0.781vw 0;
-  color: #4449F2;
+  color: #000;
 }
 
 .heading {
@@ -408,6 +414,16 @@ input:focus {
     border-radius: 0.4vw;
     border: 0.052vw solid #ddd;
     box-shadow: none !important;
+  }
+
+  .react-select .react-select__control--is-disabled{
+    background-color: #e6e6e6;
+    border-color: #e6e6e6;
+  }
+
+  .react-select .react-select__control .react-select__single-value{
+    font-size: 0.833vw;
+    color: #545454;
   }
 
   .react-select .react-select__control:hover {
@@ -875,6 +891,7 @@ input:focus {
 
   .breadcrumbs .separator {
     margin: 0 0.25vw;
+    font-size: 0.625vw;
   }
 
   .current-page {
@@ -1451,7 +1468,7 @@ input:focus {
 .dashboard_stats_grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  gap: 1.3vw;
   margin-bottom: 1.5rem;
 }
 
@@ -1479,7 +1496,7 @@ input:focus {
 
 .dashboard_stat_card.accent {
   background: #ff00001f;
-  border: 0.052vwsolid #fca5a5;
+  border: 0.052vw solid #fca5a5;
 }
 
 .dashboard_stat_label {
@@ -1509,7 +1526,7 @@ input:focus {
 .dashboard_charts_row {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 12px;
+  gap: 1.3vw;
   margin-bottom: 1.5rem;
 }
 
@@ -1517,14 +1534,14 @@ input:focus {
 .dashboard_tables_row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 1.3vw;
   margin-bottom: 1.5rem;
 }
 
 /* ── Card ── */
 .dashboard_card {
-  background: var(--color-background-primary);
-  border: 0.5px solid var(--color-border-tertiary);
+  border: 0.052vw solid #f1f1f1;
+  box-shadow: 0.052vw 0.052vw 0.256vw #f1f1f1;
   border-radius: 12px;
   padding: 1rem 1.25rem;
 }

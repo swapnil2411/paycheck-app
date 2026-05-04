@@ -1,7 +1,7 @@
 import React from 'react'
 import Select from 'react-select'
 
-const SelectDropdown = ({options, menuIsOpen, onChange, value}) => {
+const SelectDropdown = ({options, menuIsOpen, onChange, value, isDisabled}) => {
   return (
     <Select 
         options={options}
@@ -11,6 +11,7 @@ const SelectDropdown = ({options, menuIsOpen, onChange, value}) => {
         menuIsOpen={menuIsOpen}
         onChange={onChange}
         value={value}
+        isDisabled={isDisabled}
     />
   )
 }

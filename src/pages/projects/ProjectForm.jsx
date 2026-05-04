@@ -5,12 +5,14 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Close from '../../icons/Close';
 import Save from '../../icons/Save';
-import { useToast } from '../../context/toastContext/ToastContext';  // 👈 new
+import { useToast } from '../../context/toastContext/ToastContext';
+import { useAuth } from '../../context/authContext/AuthContext';
 
-const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
+const ProjectForm = ({ fetchProjects, selectedProject, onSuccess, isReadOnly }) => {
 
   const isEdit = Boolean(selectedProject);
-  const { showToast } = useToast();  // 👈 new
+  const { showToast } = useToast();
+  const { user } = useAuth();
 
   const [clients, setClients] = useState([]);
   const [errors, setErrors] = useState({});
@@ -47,9 +49,7 @@ const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
       if (!error && data) {
         const formatted = data.map(client => ({
           value: client.id,
-          label:
-            client.company_name ||
-            `${client.first_name} ${client.last_name}`
+          label: client.company_name || `${client.first_name} ${client.last_name}`
         }));
         setClients(formatted);
       }
@@ -58,61 +58,38 @@ const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
     fetchClients();
   }, []);
 
-  // ✅ Prefill in Edit Mode
-  useEffect(() => {
-    if (!selectedProject || clients.length === 0) return;
+  // ✅ Prefill in Edit/View Mode
+useEffect(() => {
+    if (!selectedProject) return;  // 👈 remove the clients.length === 0 check
 
-    const selectedClient = clients.find(
-      c => c.value === selectedProject.client_id
-    );
+    const selectedClient = clients.find(c => c.value === selectedProject.client_id)
+        || (selectedProject.client_name
+            ? { value: selectedProject.client_id, label: selectedProject.client_name }
+            : null);
 
-    const selectedType = projectTypeOptions.find(
-      t => t.value === selectedProject.project_type
-    );
+    const selectedType = projectTypeOptions.find(t => t.value === selectedProject.project_type);
 
     setProjectData({
-      project_name: selectedProject.project_name || '',
-      client_id: selectedClient || null,
-      description: selectedProject.description || '',
-      project_type: selectedType || null,
-      start_date: selectedProject.start_date
-        ? new Date(selectedProject.start_date)
-        : null,
-      end_date: selectedProject.end_date
-        ? new Date(selectedProject.end_date)
-        : null
+        project_name: selectedProject.project_name || '',
+        client_id: selectedClient || null,
+        description: selectedProject.description || '',
+        project_type: selectedType || null,
+        start_date: selectedProject.start_date ? new Date(selectedProject.start_date) : null,
+        end_date: selectedProject.end_date ? new Date(selectedProject.end_date) : null
     });
 
-  }, [selectedProject, clients]);
+}, [selectedProject, clients]);
 
   // ✅ Validation
   const validate = () => {
     const newErrors = {};
-
-    if (!projectData.project_name.trim()) {
-      newErrors.project_name = 'Project name is required';
-    }
-
-    if (!projectData.client_id) {
-      newErrors.client_id = 'Client is required';
-    }
-
-    if (!projectData.project_type) {
-      newErrors.project_type = 'Project type is required';
-    }
-
-    if (!projectData.start_date) {
-      newErrors.start_date = 'Start date is required';
-    }
-
-    if (
-      projectData.end_date &&
-      projectData.start_date &&
-      projectData.end_date < projectData.start_date
-    ) {
+    if (!projectData.project_name.trim()) newErrors.project_name = 'Project name is required';
+    if (!projectData.client_id) newErrors.client_id = 'Client is required';
+    if (!projectData.project_type) newErrors.project_type = 'Project type is required';
+    if (!projectData.start_date) newErrors.start_date = 'Start date is required';
+    if (projectData.end_date && projectData.start_date && projectData.end_date < projectData.start_date) {
       newErrors.end_date = 'End date cannot be before start date';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length > 0;
   };
@@ -124,42 +101,30 @@ const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
     const payload = {
       project_name: projectData.project_name,
       client_id: projectData.client_id.value,
+      client_name: projectData.client_id.label,
       description: projectData.description,
       project_type: projectData.project_type.value,
-      start_date: projectData.start_date
-        ? projectData.start_date.toISOString().split('T')[0]
-        : null,
-      end_date: projectData.end_date
-        ? projectData.end_date.toISOString().split('T')[0]
-        : null
+      start_date: projectData.start_date ? projectData.start_date.toISOString().split('T')[0] : null,
+      end_date: projectData.end_date ? projectData.end_date.toISOString().split('T')[0] : null,
+      user_id: user?.id
     };
 
     try {
       if (isEdit) {
-        const { error } = await supabaseClient
-          .from('projects')
-          .update(payload)
-          .eq('id', selectedProject.id);
-
+        const { error } = await supabaseClient.from('projects').update(payload).eq('id', selectedProject.id);
         if (error) throw error;
-        showToast('Project updated successfully ✅');  // 👈 new
-
+        showToast('Project updated successfully ✅');
       } else {
-        const { error } = await supabaseClient
-          .from('projects')
-          .insert([payload]).select();
-
+        const { error } = await supabaseClient.from('projects').insert([payload]).select();
         if (error) throw error;
-        showToast('Project added successfully ✅');  // 👈 new
+        showToast('Project added successfully ✅');
       }
-
       handleCancel();
       fetchProjects();
       onSuccess();
-
     } catch (err) {
       console.error(err);
-      showToast(isEdit ? 'Error updating project' : 'Error adding project', 'error');  // 👈 new
+      showToast(isEdit ? 'Error updating project' : 'Error adding project', 'error');
     }
   };
 
@@ -178,21 +143,16 @@ const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
   return (
     <div className="form_wrapper">
       <div className='form_element_container'>
+
         <div className="form_element">
           <label>Project Name *</label>
           <input
             type="text"
             value={projectData.project_name}
-            onChange={(e) =>
-              setProjectData(prev => ({
-                ...prev,
-                project_name: e.target.value
-              }))
-            }
+            onChange={(e) => setProjectData(prev => ({ ...prev, project_name: e.target.value }))}
+            disabled={isReadOnly}
           />
-          {errors.project_name && (
-            <span className="error_message">{errors.project_name}</span>
-          )}
+          {errors.project_name && <span className="error_message">{errors.project_name}</span>}
         </div>
 
         <div className="form_element">
@@ -200,16 +160,10 @@ const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
           <SelectDropdown
             options={clients}
             value={projectData.client_id}
-            onChange={(selected) =>
-              setProjectData(prev => ({
-                ...prev,
-                client_id: selected
-              }))
-            }
+            onChange={(selected) => setProjectData(prev => ({ ...prev, client_id: selected }))}
+            isDisabled={isReadOnly}
           />
-          {errors.client_id && (
-            <span className="error_message">{errors.client_id}</span>
-          )}
+          {errors.client_id && <span className="error_message">{errors.client_id}</span>}
         </div>
 
         <div className="form_element">
@@ -217,28 +171,18 @@ const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
           <SelectDropdown
             options={projectTypeOptions}
             value={projectData.project_type}
-            onChange={(selected) =>
-              setProjectData(prev => ({
-                ...prev,
-                project_type: selected
-              }))
-            }
+            onChange={(selected) => setProjectData(prev => ({ ...prev, project_type: selected }))}
+            isDisabled={isReadOnly}
           />
-          {errors.project_type && (
-            <span className="error_message">{errors.project_type}</span>
-          )}
+          {errors.project_type && <span className="error_message">{errors.project_type}</span>}
         </div>
 
         <div className="form_element">
           <label>Description</label>
           <textarea
             value={projectData.description}
-            onChange={(e) =>
-              setProjectData(prev => ({
-                ...prev,
-                description: e.target.value
-              }))
-            }
+            onChange={(e) => setProjectData(prev => ({ ...prev, description: e.target.value }))}
+            disabled={isReadOnly}
           />
         </div>
 
@@ -246,48 +190,39 @@ const ProjectForm = ({ fetchProjects, selectedProject, onSuccess }) => {
           <label>Start Date *</label>
           <DatePicker
             selected={projectData.start_date}
-            onChange={(date) =>
-              setProjectData(prev => ({
-                ...prev,
-                start_date: date
-              }))
-            }
+            onChange={(date) => setProjectData(prev => ({ ...prev, start_date: date }))}
             dateFormat="yyyy-MM-dd"
             className="date_input"
+            disabled={isReadOnly}
           />
-          {errors.start_date && (
-            <span className="error_message">{errors.start_date}</span>
-          )}
+          {errors.start_date && <span className="error_message">{errors.start_date}</span>}
         </div>
 
         <div className="form_element">
           <label>End Date</label>
           <DatePicker
             selected={projectData.end_date}
-            onChange={(date) =>
-              setProjectData(prev => ({
-                ...prev,
-                end_date: date
-              }))
-            }
+            onChange={(date) => setProjectData(prev => ({ ...prev, end_date: date }))}
             dateFormat="yyyy-MM-dd"
             className="date_input"
+            disabled={isReadOnly}
           />
-          {errors.end_date && (
-            <span className="error_message">{errors.end_date}</span>
-          )}
+          {errors.end_date && <span className="error_message">{errors.end_date}</span>}
         </div>
+
       </div>
 
       <div className='form_btn_grp'>
-        <button className='btn outline_btn' onClick={handleCancel}>
+        <button className='btn outline_btn' onClick={onSuccess}>
           <Close />
-          <span>Cancel</span>
+          <span>Close</span>
         </button>
-        <button className='btn filled_btn' onClick={handleSubmit}>
-          <Save />
-          <span>Save</span>
-        </button>
+        {!isReadOnly && (
+          <button className='btn filled_btn' onClick={handleSubmit}>
+            <Save />
+            <span>Save</span>
+          </button>
+        )}
       </div>
     </div>
   );

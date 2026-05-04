@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, use } from 'react'
 import ProjectForm from './ProjectForm'
 import ProjectList from './ProjectList'
 import { supabaseClient } from '../../services/supabaseClient'
 import FormModal from '../../components/modal/FormModal'
 import { useLoader } from '../../context/loaderContext/LoaderContext'
 import ConfirmationModal from '../../components/modal/ConfirmationModal'
-import { useToast } from '../../context/toastContext/ToastContext'  // 👈 new
+import { useToast } from '../../context/toastContext/ToastContext'
+import { useAuth } from '../../context/authContext/AuthContext'
 
 const Project = () => {
     const [projects, setProjects] = useState([]);
@@ -17,7 +18,8 @@ const Project = () => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [projectToDelete, setProjectToDelete] = useState(null);
     const { startLoader, stopLoader, loading } = useLoader();
-    const { showToast } = useToast();  // 👈 new
+    const { showToast } = useToast();
+    const { user } = useAuth();
 
     const fetchProjects = async (currentPage = 1) => {
         const from = (currentPage - 1) * limit;
@@ -26,22 +28,14 @@ const Project = () => {
         try {
             const { data, error, count } = await supabaseClient
                 .from('projects')
-                .select(`
-                    *,
-                    clients (
-                        id,
-                        company_name,
-                        first_name,
-                        last_name
-                    )
-                `, { count: 'exact' })
+                .select('*', { count: 'exact' })
                 .range(from, to);
             if (error) throw error;
             setProjects(data);
             setTotalCount(count);
         } catch (error) {
             console.error("Error fetching projects:", error);
-            showToast("Error fetching projects", "error");  // 👈 new
+            showToast("Error fetching projects", "error");
         } finally {
             stopLoader();
         }
@@ -68,7 +62,7 @@ const Project = () => {
 
     const handleConfirmDelete = async () => {
         if (!projectToDelete) return;
-        startLoader();  // 👈 new
+        startLoader();
         try {
             const { error } = await supabaseClient
                 .from('projects')
@@ -77,15 +71,17 @@ const Project = () => {
             if (error) throw error;
             setIsConfirmOpen(false);
             setProjectToDelete(null);
-            showToast("Project deleted successfully ✅");  // 👈 new
+            showToast("Project deleted successfully ✅");
             fetchProjects(page);
         } catch (error) {
             console.error("Error deleting project:", error);
-            showToast("Error deleting project", "error");  // 👈 new
+            showToast("Error deleting project", "error");
         } finally {
-            stopLoader();  // 👈 new
+            stopLoader();
         }
     }
+
+    
 
     return (
         <>
@@ -109,18 +105,23 @@ const Project = () => {
                 page={page}
                 setPage={setPage}
                 loading={loading}
+                currentUserId={user?.id}
             />
 
             <FormModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
-                title={selectedProject ? "Edit Project" : "Add Project"}
+                title={selectedProject 
+    ? (selectedProject.user_id !== user?.id ? "View Project" : "Edit Project") 
+    : "Add Project"
+}
                 width="80%"
             >
                 <ProjectForm
                     onSuccess={() => setIsModalOpen(false)}
                     fetchProjects={fetchProjects}
                     selectedProject={selectedProject}
+                    isReadOnly={selectedProject ? selectedProject.user_id !== user?.id : false}
                 />
             </FormModal>
 

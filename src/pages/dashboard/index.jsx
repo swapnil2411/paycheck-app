@@ -321,7 +321,7 @@ const Dashboard = () => {
             </span>
           </div>
           {overdueInvoices.length === 0 && (
-            <p className="dashboard_empty success">No overdue invoices</p>
+            <p className="dashboard_empty">No overdue invoices</p>
           )}
           {overdueInvoices.map((inv) => (
             <div key={inv.id} className="dashboard_table_row">
