@@ -114,8 +114,8 @@ const LogIn = () => {
             provider: 'azure',
             options: {
                 scopes: 'openid email profile',
-                redirectTo: 'http://localhost:5173/'
-                // redirectTo: "https://paycheck-app.onrender.com"
+                redirectTo: import.meta.env.VITE_REDIRECT_URI_PROD
+                //redirectTo: import.meta.env.VITE_REDIRECT_URI_LOCAL
             },
         });
        
